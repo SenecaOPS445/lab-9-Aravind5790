@@ -1,0 +1,33 @@
+---
+- hosts: vmlab
+  user: Student
+  become: yes
+  vars:
+    seneca_id: Aravi-Kumar
+    lab_dirs: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+  tasks:
+    - name: Install EPEL repository if not already installed
+      action: yum name=epel-release state=present
+      when: not ansible_distribution == 'CentOS'
+
+    - name: Update Apache (httpd)
+      action: yum name=httpd state=latest
+      args:
+        enablerepo: epel
+
+    - name: Remove 'tree' package
+      action: yum name=tree state=absent
+
+    - name: Set hostname to Aravi-Kumar
+      action: hostname name="{{ Aravi-Kumar }}"
+
+    - name: Create new user with sudo access
+      action: user name="{{ Aravi-Kumar }}" groups=wheel append=yes create_home=yes
+
+    - name: Configure new user account for passwordless SSH
+      action: authorized_key user="{{ Aravi-Kumar }}" key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+    - name: Create directory structure for labs
+      action: file path="/home/{{ Aravi-Kumar }}/ops445/lab{{ item }}" state=directory mode='0755'
+      loop: "{{ lab_dirs }}"
